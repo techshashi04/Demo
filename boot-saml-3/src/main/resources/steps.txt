@@ -1,0 +1,93 @@
+Instructions on running the "Used Car Portal" Application SAML
+========================================================================
+Note : This code uses Spring Boot 3.0 and Spring Security 6.0
+
+
+Steps: 
+
+1. Install JDK 17 from the link below. Set JAVA_HOME to installation directory ( e.g C:\devtools\jdk-17.0.1)
+
+    https://jdk.java.net/17/
+
+    
+
+2. Install Maven from the following site
+    
+    https://maven.apache.org/install.html
+    
+    Use "mvn --version" to make sure that JDK 17 is taken. 
+    
+3. Created the pojo Car.
+
+4. Created the CarsOnlineController with endpoints / /carsonline /buy/{id} /edit/{id} /user
+
+5. Created BootSecurityConfig
+   5.1.  SecurityFilterChain bean
+   5.2.  Created Saml2MetadataFilter
+   5.3.  Implemented authoritiesExtractor to extract groups and roles.
+   5.4.  set authoritiesExtractor in the SAML Authentication
+   5.5.  registered the SAML Auth provider
+6. Create files private.key and certificate.crt for the Application.
+
+	- These files must be stored in directory "main/resources/credentials"
+
+7. Create the SAML 2.0 Integration Application from the Okta Console (See file okta-setup.txt for Demo setup)
+    SAML 2.0 Application Setup in Okta
+    ===================================
+    7.1. Set up the Application Integration in Okta with the following properties
+
+        App name                       = saml-boot-app
+        Single sign on URL             = http://localhost:8080/login/saml2/sso/carsonline
+        Audience URI (SP Entity ID)    = http://localhost:8080/saml2/service-provider-metadata/carsonline
+        Default RelayState             = http://localhost:8080/carsonline
+        Name ID format                 = Unspecified
+        Application username           = Email Prefix
+        Assertion Encryption           = Encrypted
+        Encryption Certificate         = <upload certificate.crt>
+        Enable Single Logout           = <Enable this>
+        Single Logout URL              = http://localhost:8080/logout/saml2/slo
+        SP Issuer                      = http://localhost:8080/saml2/service-provider-metadata/carsonline
+        Signature Certificate          = <upload certificate.crt>
+        Signed Requests                = No (Application will not send signed Request)
+
+        Attribute Statements :
+
+            first, Value = user.firstName
+            last , Value = user.lastName
+
+        Group Attribute Statements :
+
+            groups, Filter = Matches Regexp = cars\..*
+
+    7.2. Complete the setup
+    7.3. To extract IDP SAML Metadata, do the following
+        - click on tab "Sign On"
+        - Under Metadata Details, copy the metadata URL and use Google Chrome to view it
+        - Save the file as resources/okta-metadata.xml
+    7.4. Create two groups
+        - cars.admin
+        - cars.user
+    6.5. From Application screen, assign the two groups to the Application saml-boot-app
+    7.6. Create users and assign to these groups.
+        - Use these users to test the application
+	7.7. Assign yourself to the Application and groups
+
+
+5. Create the following application files (as indicated in steps 3 and 4)
+
+	- main/resources/credentials/private.key
+	- main/resources/credentials/certificate.key
+	- main/resources/okta-metadata.yml
+
+
+6. To run the Cars Portal Application at port 8080
+
+    mvn spring-boot:run 
+    
+
+7. Access the Cars Portal Application
+
+    http://localhost:8080/
+    
+
+8. Login using the Okta user(s)
